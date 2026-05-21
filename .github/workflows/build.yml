@@ -1,0 +1,117 @@
+name: Build sautomate
+
+on:
+  push:
+    tags:
+      - 'unified-v*'
+  workflow_dispatch:
+
+jobs:
+  build-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: pip install nuitka zstandard
+
+      - name: Build Linux binary
+        run: |
+          nuitka --onefile --output-filename=sa \
+            --no-deployment-flag=self-execution \
+            --nofollow-imports \
+            --follow-import-to=parser \
+            --follow-import-to=executor \
+            --follow-import-to=args \
+            --follow-import-to=filehandle \
+            --follow-import-to=logger \
+            --follow-import-to=operations \
+            --include-module=subprocess \
+            --include-module=sys \
+            --include-module=os \
+            --include-module=pathlib \
+            --include-module=hashlib \
+            --include-module=datetime \
+            --include-module=re \
+            --include-module=warnings \
+            --include-module=operations \
+            sa.py
+
+      - name: Upload Linux binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: sa-linux
+          path: sa
+
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: pip install nuitka zstandard
+
+      - name: Build Windows binary
+        run: |
+          nuitka --onefile --output-filename=sa `
+            --no-deployment-flag=self-execution `
+            --nofollow-imports `
+            --follow-import-to=parser `
+            --follow-import-to=executor `
+            --follow-import-to=args `
+            --follow-import-to=filehandle `
+            --follow-import-to=logger `
+            --follow-import-to=operations `
+            --include-module=subprocess `
+            --include-module=sys `
+            --include-module=os `
+            --include-module=pathlib `
+            --include-module=hashlib `
+            --include-module=datetime `
+            --include-module=re `
+            --include-module=warnings `
+            --include-module=operations `
+            sa.py
+
+      - name: Upload Windows binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: sa-windows
+          path: sa.exe
+
+  release:
+    needs: [build-linux, build-windows]
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
+    steps:
+      - name: Download Linux binary
+        uses: actions/download-artifact@v4
+        with:
+          name: sa-linux
+
+      - name: Download Windows binary
+        uses: actions/download-artifact@v4
+        with:
+          name: sa-windows
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            sa
+            sa.exe
+          name: ${{ github.ref_name }}
+          draft: false
+          prerelease: false

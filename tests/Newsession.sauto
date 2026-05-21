@@ -1,0 +1,7 @@
+DETAILED 1
+
+echo This is a test for newsession.
+echo I'll launch powershell and launch dir C:/
+
+NEWSESSION powershell
+dir C:/

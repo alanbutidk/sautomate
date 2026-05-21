@@ -1,0 +1,6 @@
+DETAILED 1
+echo Testing plain shell command
+get-usage pip
+get-latest requests --pkg-mng pip
+ignore echo this will work 1
+ignore thisisnotacommand 1
